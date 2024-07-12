@@ -4,11 +4,6 @@ use syn::punctuated::Punctuated;
 
 use crate::utils;
 
-macro_rules! bail {
-    ($span:expr, $msg:expr) => {
-        return Err(syn::Error::new_spanned($span, $msg));
-    };
-}
 
 /// The macro attribute input
 pub struct ModuleGenericAttribute {

@@ -3,6 +3,13 @@ use std::collections::HashSet;
 use quote::ToTokens;
 use syn::visit::Visit;
 
+macro_rules! bail {
+    ($span:expr, $msg:expr) => {
+        return Err(syn::Error::new_spanned($span, $msg));
+    };
+}
+pub(crate) use bail;
+
 struct BoundsDependenties<'ast> {
     generics: &'ast[syn::Ident],
     is_dependency: Vec<bool>
