@@ -1,5 +1,6 @@
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, visit_mut::VisitMut};
+use utils::bail;
 
 mod input;
 mod utils;
@@ -16,9 +17,20 @@ pub fn module_generics(attr: TokenStream, item: TokenStream) -> TokenStream {
     let generics_info = input::ModuleGenerics::from_attribute(attribute).unwrap();
 
     let mut item = parse_macro_input!(item as syn::ItemMod);
+    if item.content.is_none() {
+        bail!(item, "The module must have a content");
+    }
     edit::ItemExtendingVisit::new(&generics_info).visit_item_mod_mut(&mut item);
 
-    quote::quote! {
-        #item
-    }.into()
+    // Return the modified item
+    if item.ident == "__" {
+        let (_, content) = item.content.unwrap();
+        quote::quote! {
+            #( #content )*
+        }.into()
+    } else {
+        quote::quote! {
+            #item
+        }.into()
+    }
 }
