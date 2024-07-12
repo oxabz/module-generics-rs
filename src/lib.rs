@@ -6,8 +6,6 @@ mod utils;
 mod edit;
 
 // TODO: 
-// - Add support for where clause
-// - Add support for all items
 // - Add support for all generics including lifetimes
 // - Add support for default values
 
