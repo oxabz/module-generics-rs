@@ -142,7 +142,11 @@ impl<'v> syn::visit_mut::VisitMut for ItemExtendingVisit<'v> {
     }
 
     fn visit_item_trait_mut(&mut self, i: &mut syn::ItemTrait) {
-        // TODO: Handle the impl restrictions
+        // Get the module generics in the impl restrictions
+        let mut mod_generics = HashSet::new();
+        for super_trait in &i.supertraits {
+            mod_generics.extend(utils::get_bounds_mod_generics(&self.mod_generics_infos.generics, &super_trait));
+        }
 
         // Expand the generics of the trait
         self.expand_generics(&mut i.generics);
