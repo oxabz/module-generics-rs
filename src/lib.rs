@@ -18,7 +18,7 @@ pub fn module_generics(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let mut item = parse_macro_input!(item as syn::ItemMod);
     if item.content.is_none() {
-        bail!(item, "The module must have a content");
+        return syn::Error::new(item.span(), "Module must have a body").to_compile_error().into()
     }
     edit::ItemExtendingVisit::new(&generics_info).visit_item_mod_mut(&mut item);
 
