@@ -3,48 +3,57 @@ use std::collections::HashSet;
 use quote::ToTokens;
 use syn::visit::Visit;
 
+
 macro_rules! bail {
     ($span:expr, $msg:expr) => {
         return Err(syn::Error::new_spanned($span, $msg))
     };
 }
+/// A macro that exit a compact function with an a syn error 
 pub(crate) use bail;
 
-struct BoundsDependenties<'ast> {
+/// A visitor that finds module generics in a syn AST
+struct BoundsDependentiesVisit<'ast> {
+    /// The generics to find
     generics: &'ast[syn::Ident],
-    is_dependency: Vec<bool>
+    /// Whether the generics have been found
+    found: Vec<bool>
 }
 
-impl<'ast> BoundsDependenties<'ast> {
+impl<'ast> BoundsDependentiesVisit<'ast> {
+    // Create a new instance of the visitor
     fn new(generics: &'ast [syn::Ident]) -> Self {
         let is_dependency = vec![false; generics.len()];
         Self {
             generics,
-            is_dependency
+            found: is_dependency
         }
     }
 
-    fn set_dependency(&mut self, index: usize) {
-        self.is_dependency[index] = true;
+    // Mark a generic as found
+    fn mark(&mut self, index: usize) {
+        self.found[index] = true;
     }
 
-    fn reset_dependencies(&mut self) {
-        self.is_dependency = vec![false; self.generics.len()];
+    // Reset the found generics
+    fn reset(&mut self) {
+        self.found = vec![false; self.generics.len()];
     }
 
+    // Accumulate the found generics in a vector
     fn get_dependencies(&self) -> Vec<syn::Ident> {
-        self.generics.iter().zip(self.is_dependency.iter())
+        self.generics.iter().zip(self.found.iter())
             .filter(|(_, &is_dependency)| is_dependency)
             .map(|(ident, _)| ident.clone())
             .collect()
     }
 }
 
-impl<'ast> syn::visit::Visit<'ast> for BoundsDependenties<'ast> {
+impl<'ast> syn::visit::Visit<'ast> for BoundsDependentiesVisit<'ast> {
     fn visit_type_path(&mut self, i: &'ast syn::TypePath) {
         if let Some(ident) = i.path.get_ident() {
             if let Some(index) = self.generics.iter().position(|x| x == ident) {
-                self.set_dependency(index);
+                self.mark(index);
             }
         }
         syn::visit::visit_type_path(self, i);
@@ -58,7 +67,7 @@ impl<'ast> syn::visit::Visit<'ast> for BoundsDependenties<'ast> {
         };
 
         if let Some(index) = self.generics.iter().position(|x| x == ident) {
-            self.set_dependency(index);
+            self.mark(index);
         }
 
         syn::visit::visit_generic_param(self, i);
@@ -67,12 +76,12 @@ impl<'ast> syn::visit::Visit<'ast> for BoundsDependenties<'ast> {
 
 pub fn get_bounds_mod_generics<'ast>(generics: &[syn::Ident], bound: impl IntoIterator<Item = &'ast syn::TypeParamBound>) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
-    let mut visitor = BoundsDependenties::new(generics);
+    let mut visitor = BoundsDependentiesVisit::new(generics);
 
     for bound in bound.into_iter() {
         visitor.visit_type_param_bound(bound);
         dependencies.extend(visitor.get_dependencies());
-        visitor.reset_dependencies();
+        visitor.reset();
     }
 
     dependencies
@@ -80,7 +89,7 @@ pub fn get_bounds_mod_generics<'ast>(generics: &[syn::Ident], bound: impl IntoIt
 
 pub fn get_generics_mod_generics(generics: &[syn::Ident], ast: & syn::Generics) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
-    let mut visitor = BoundsDependenties::new(generics);
+    let mut visitor = BoundsDependentiesVisit::new(generics);
 
     visitor.visit_generics(ast);
     dependencies.extend(visitor.get_dependencies());
@@ -90,7 +99,7 @@ pub fn get_generics_mod_generics(generics: &[syn::Ident], ast: & syn::Generics) 
 
 pub fn get_type_mod_generics(generics: &[syn::Ident], ty: & syn::Type) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
-    let mut visitor = BoundsDependenties::new(generics);
+    let mut visitor = BoundsDependentiesVisit::new(generics);
 
     visitor.visit_type(ty);
     dependencies.extend(visitor.get_dependencies());
@@ -100,7 +109,7 @@ pub fn get_type_mod_generics(generics: &[syn::Ident], ty: & syn::Type) -> HashSe
 
 pub fn get_path_arguments_mod_generics(generics: &[syn::Ident], path_arg: & syn::PathArguments) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
-    let mut visitor = BoundsDependenties::new(generics);
+    let mut visitor = BoundsDependentiesVisit::new(generics);
 
     visitor.visit_path_arguments(path_arg);
     dependencies.extend(visitor.get_dependencies());
@@ -110,7 +119,7 @@ pub fn get_path_arguments_mod_generics(generics: &[syn::Ident], path_arg: & syn:
 
 pub fn get_predicate_mod_generics(generics: &[syn::Ident], predicate: & syn::WherePredicate) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
-    let mut visitor = BoundsDependenties::new(generics);
+    let mut visitor = BoundsDependentiesVisit::new(generics);
 
     visitor.visit_where_predicate(predicate);
     dependencies.extend(visitor.get_dependencies());

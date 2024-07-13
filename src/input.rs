@@ -70,13 +70,10 @@ impl ModuleGenerics {
             None => Vec::new()
         };
 
-
-
         let mut predicates_generics = Vec::with_capacity(predicates.len());
         for predicate in &predicates {
             predicates_generics.push(utils::get_predicate_mod_generics(&generics, predicate));
         }
-
         
         Ok(Self {
             generics,

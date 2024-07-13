@@ -4,13 +4,26 @@ use syn::GenericParam;
 
 use crate::{input, utils};
 
+/**
+A visitor that applies the macro 
 
+It :
+- Adds the modules_generics to the generic parameters of an item based on the signature (function, trait, impl)
+- Expands the generics : 
+    - Adds the modules generics found in the bounds of the generics parameters
+    - Adds the module generics that are dependencies of the module generics used in the generics parameters
+    - Adds the bounds of the module generics to the generics parameters
+    - Adds the predicates of the module generics to the generics parameters
+- If the item is a trait or an impl, it will visit the items of the trait or the impl with a subset of the module generics
+  that are not already defined in the generics parameters
+ */
 pub(crate) struct ItemExtendingVisit<'v>{
     mod_generics_infos: &'v input::ModuleGenerics,
     skip_mod_generics: HashSet<syn::Ident>
 }
 
 impl<'v> ItemExtendingVisit<'v> {
+    /// Create a new instance of the visitor
     pub fn new(bounds_infos: &'v input::ModuleGenerics) -> Self {
         Self {
             mod_generics_infos: bounds_infos,
@@ -18,6 +31,8 @@ impl<'v> ItemExtendingVisit<'v> {
         }
     }
 
+    /// Create a new instance of the visitor with a set of generics to skip
+    /// Used when visiting the items of a trait or an impl
     pub fn new_with_skip(bounds_infos: &'v input::ModuleGenerics, skip_dependencies: HashSet<syn::Ident>) -> Self {
         Self {
             mod_generics_infos: bounds_infos,
@@ -25,6 +40,7 @@ impl<'v> ItemExtendingVisit<'v> {
         }
     }
 
+    /// Insert a generic parameter in the generics if it is not already defined
     fn generics_insert(&self, generics: &mut syn::Generics, mod_generic: &syn::Ident){
         if self.skip_mod_generics.contains(mod_generic) {
             return;
@@ -47,6 +63,7 @@ impl<'v> ItemExtendingVisit<'v> {
         }));
     }
 
+    /// Expand the generics of an item
     fn expand_generics(&self, generics: &mut syn::Generics) {
         // Find all the module generics in the function signature, ...
         let mut mod_generics = utils::get_generics_mod_generics(&self.mod_generics_infos.generics, generics);
@@ -92,6 +109,7 @@ impl<'v> ItemExtendingVisit<'v> {
 
     }
 
+    /// Returns the module generics that are already defined in the generics parameters of an item
     fn inner_skip_mod_generics(&self, generics: &syn::Generics) -> HashSet<syn::Ident> {
         generics.params.iter()
             .filter_map(|x| match x {
