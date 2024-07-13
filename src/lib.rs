@@ -1,6 +1,5 @@
 use proc_macro::TokenStream;
 use syn::{parse_macro_input, visit_mut::VisitMut};
-use utils::bail;
 
 mod input;
 mod utils;

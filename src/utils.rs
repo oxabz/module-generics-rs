@@ -5,7 +5,7 @@ use syn::visit::Visit;
 
 macro_rules! bail {
     ($span:expr, $msg:expr) => {
-        return Err(syn::Error::new_spanned($span, $msg));
+        return Err(syn::Error::new_spanned($span, $msg))
     };
 }
 pub(crate) use bail;
@@ -78,7 +78,7 @@ pub fn get_bounds_mod_generics<'ast>(generics: &[syn::Ident], bound: impl IntoIt
     dependencies
 }
 
-pub fn get_generics_mod_generics<'ast>(generics: &[syn::Ident], ast: &'ast syn::Generics) -> HashSet<syn::Ident> {
+pub fn get_generics_mod_generics(generics: &[syn::Ident], ast: & syn::Generics) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
     let mut visitor = BoundsDependenties::new(generics);
 
@@ -88,7 +88,7 @@ pub fn get_generics_mod_generics<'ast>(generics: &[syn::Ident], ast: &'ast syn::
     dependencies
 }
 
-pub fn get_type_mod_generics<'ast>(generics: &[syn::Ident], ty: &'ast syn::Type) -> HashSet<syn::Ident> {
+pub fn get_type_mod_generics(generics: &[syn::Ident], ty: & syn::Type) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
     let mut visitor = BoundsDependenties::new(generics);
 
@@ -98,7 +98,7 @@ pub fn get_type_mod_generics<'ast>(generics: &[syn::Ident], ty: &'ast syn::Type)
     dependencies
 }
 
-pub fn get_path_arguments_mod_generics<'ast>(generics: &[syn::Ident], path_arg: &'ast syn::PathArguments) -> HashSet<syn::Ident> {
+pub fn get_path_arguments_mod_generics(generics: &[syn::Ident], path_arg: & syn::PathArguments) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
     let mut visitor = BoundsDependenties::new(generics);
 
@@ -108,7 +108,7 @@ pub fn get_path_arguments_mod_generics<'ast>(generics: &[syn::Ident], path_arg: 
     dependencies
 }
 
-pub fn get_predicate_mod_generics<'ast>(generics: &[syn::Ident], predicate: &'ast syn::WherePredicate) -> HashSet<syn::Ident> {
+pub fn get_predicate_mod_generics(generics: &[syn::Ident], predicate: & syn::WherePredicate) -> HashSet<syn::Ident> {
     let mut dependencies = HashSet::new();
     let mut visitor = BoundsDependenties::new(generics);
 

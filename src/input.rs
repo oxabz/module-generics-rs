@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use syn::punctuated::Punctuated;
 
 use crate::utils;
-
+use crate::utils::bail;
 
 /// The macro attribute input
 pub struct ModuleGenericAttribute {
@@ -54,7 +54,7 @@ impl ModuleGenerics {
 
         for generic in attr.generics {
             let syn::GenericParam::Type(generic) = generic else {
-                bail!(generic, "Only type generics are supported");
+                bail!(generic, "Only type generics are supported")
             };
             let ident = generic.ident;
             generics.push(ident.clone());

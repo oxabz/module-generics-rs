@@ -52,7 +52,7 @@ impl<'v> ItemExtendingVisit<'v> {
         let mut mod_generics = utils::get_generics_mod_generics(&self.mod_generics_infos.generics, generics);
         
         // ...get the dependencies of theses module generics,...
-        let mod_generics_deps = self.mod_generics_infos.get_dependencies(&mut mod_generics);
+        let mod_generics_deps = self.mod_generics_infos.get_dependencies(&mod_generics);
         
         // ... add them as generic parameters, ...
         mod_generics.extend(mod_generics_deps);
@@ -144,6 +144,11 @@ impl<'v> syn::visit_mut::VisitMut for ItemExtendingVisit<'v> {
     fn visit_item_trait_mut(&mut self, i: &mut syn::ItemTrait) {
         // Get the module generics in the impl restrictions
         let mod_generics = utils::get_bounds_mod_generics(&self.mod_generics_infos.generics, i.supertraits.iter());
+
+        // Add them as generic parameters
+        for mod_generic in mod_generics {
+            self.generics_insert(&mut i.generics, &mod_generic);
+        }
 
         // Expand the generics of the trait
         self.expand_generics(&mut i.generics);
