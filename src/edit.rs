@@ -211,4 +211,8 @@ impl<'v> syn::visit_mut::VisitMut for ItemExtendingVisit<'v> {
         }
     }
 
+    // Type aliases dont have bounds so we skip them to avoid creating an error
+    fn visit_item_type_mut(&mut self, _i: &mut syn::ItemType) {}
+    fn visit_trait_item_type_mut(&mut self, _i: &mut syn::TraitItemType) {}
+    fn visit_impl_item_type_mut(&mut self, _i: &mut syn::ImplItemType) {}
 }
